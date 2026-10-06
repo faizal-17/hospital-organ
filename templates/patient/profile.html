@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Profile | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white p-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-3 rounded-circle bg-primary-subtle text-primary">
+                            <i class="bi bi-person-lines-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">Patient Profile Management</h4>
+                            <p class="text-muted mb-0 fs-8">Keep your contact information, emergency numbers, and residential details up-to-date.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">First Name</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Last Name</label>
+                                {{ form.last_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Email</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Phone</label>
+                                {{ form.phone }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Blood Group</label>
+                                {{ form.blood_group }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">National ID / Aadhar</label>
+                                {{ form.national_id }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Date of Birth</label>
+                                {{ form.date_of_birth }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fs-8 fw-semibold">Address</label>
+                                {{ form.address }}
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary fw-bold text-uppercase fs-8 mb-3"><i class="bi bi-telephone-plus me-1"></i>Emergency Contact</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Emergency Contact Person</label>
+                                {{ form.emergency_contact_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Emergency Contact Phone</label>
+                                {{ form.emergency_contact_phone }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'patient_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-save me-1"></i>Update Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

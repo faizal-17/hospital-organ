@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}System Overview & Administration | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h3 class="fw-bold mb-0">System Executive Overview &amp; Control</h3>
+            <p class="text-muted mb-0 fs-8">Platform-wide statistics, active registries, and compliance audit trail overview.</p>
+        </div>
+        <div>
+            <a href="/admin/" target="_blank" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Open Django Admin Panel
+            </a>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-start border-4 border-primary">
+                <div class="fs-4 fw-bold text-primary">{{ total_users }}</div>
+                <small class="text-muted fw-semibold">Registered User Accounts</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-start border-4 border-danger">
+                <div class="fs-4 fw-bold text-danger">{{ total_requests }}</div>
+                <small class="text-muted fw-semibold">Total Organ Requests</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-start border-4 border-info">
+                <div class="fs-4 fw-bold text-info">{{ total_organs }}</div>
+                <small class="text-muted fw-semibold">Procured Organs in Registry</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-start border-4 border-warning">
+                <div class="fs-4 fw-bold text-warning">{{ total_mortuary }}</div>
+                <small class="text-muted fw-semibold">Mortuary Intake Records</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Logs -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0"><i class="bi bi-shield-check me-2 text-primary"></i>Recent System Activity</h6>
+            <a href="{% url 'audit_logs' %}" class="fs-8 text-decoration-none">View full audit ledger &rarr;</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 fs-8">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>Actor</th>
+                            <th>Role</th>
+                            <th>Transition</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_logs %}
+                            <tr>
+                                <td class="text-muted">{{ log.timestamp|date:"d M Y, H:i:s" }}</td>
+                                <td><span class="badge bg-secondary font-monospace">{{ log.action }}</span></td>
+                                <td>{{ log.actor.username|default:"System" }}</td>
+                                <td>{{ log.actor_role }}</td>
+                                <td><code>{{ log.from_state|default:"-" }}</code> &rarr; <code>{{ log.to_state }}</code></td>
+                                <td class="text-secondary">{{ log.comments|truncatechars:70 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

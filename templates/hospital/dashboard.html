@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Host Portal | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Hospital Host &amp; Transplant Operations</h3>
+                <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">Transplant Center</span>
+            </div>
+            <p class="text-muted mb-0 fs-8">Center: <b>{{ hospital.name }}</b> (Code: {{ hospital.code }}). Manage organ procurement inventory, cold ischemia viability, and automated algorithmic matching.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'register_organ' %}" class="btn btn-primary shadow-sm">
+                <i class="bi bi-box-seam me-1"></i> Register Harvested Organ
+            </a>
+            <a href="{% url 'register_donor' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-person-heart me-1"></i> Enroll Donor
+            </a>
+        </div>
+    </div>
+
+    <!-- Live Available Organs Inventory (Cold Ischemia Focus) -->
+    <div class="card mb-4 shadow-sm border-top border-4 border-info">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-box2-heart text-info me-2"></i>Active Organ Inventory &amp; Cold Ischemia Monitoring</h5>
+                <small class="text-muted fs-8">Organs actively preserved and ready for priority matching before cold ischemia window expires.</small>
+            </div>
+            <span class="badge bg-info">{{ available_organs.count }} Organs In Stock</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 fs-8">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Organ ID</th>
+                            <th>Organ Type</th>
+                            <th>Blood Group</th>
+                            <th>Condition Grade</th>
+                            <th>Harvested At</th>
+                            <th>Cold Ischemia Viability Window</th>
+                            <th>Storage / Perfusion</th>
+                            <th>Automated Matching</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for organ in available_organs %}
+                            <tr>
+                                <td class="font-monospace fw-bold text-primary">{{ organ.organ_id }}</td>
+                                <td>
+                                    <strong class="fs-7">{{ organ.get_organ_type_display }}</strong>
+                                    <small class="d-block text-muted">Donor: {{ organ.donor.donor_code }}</small>
+                                </td>
+                                <td><span class="badge bg-danger-subtle text-danger fs-7">{{ organ.blood_group }}</span></td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ organ.get_condition_grade_display }}</span>
+                                </td>
+                                <td>{{ organ.harvested_at|date:"d M Y, H:i" }}</td>
+                                <td>
+                                    {% if organ.is_viable %}
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle fs-8">
+                                                <i class="bi bi-hourglass-split me-1"></i>{{ organ.hours_remaining }}h remaining
+                                            </span>
+                                            <small class="text-muted">(Max {{ organ.viability_hours }}h)</small>
+                                        </div>
+                                    {% else %}
+                                        <span class="badge bg-danger">EXPIRED</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ organ.storage_location|default:"Cold Perfusion Unit A" }}</td>
+                                <td>
+                                    <a href="{% url 'matching_engine_view' organ.id %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+                                        <i class="bi bi-cpu-fill me-1"></i>Run Matching Engine
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="bi bi-box-seam fs-1 d-block mb-2 text-secondary"></i>
+                                    No available organs in inventory. Register a harvested organ or monitor mortuary donor triggers.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two-Column Grid: Donors Registered & In-Transit / Allocated Organs -->
+    <div class="row g-4">
+        
+        <!-- Donor Records -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h6 class="fw-bold mb-0 text-secondary"><i class="bi bi-person-lines-fill me-2"></i>Enrolled Donor Records</h6>
+                    <a href="{% url 'register_donor' %}" class="btn btn-outline-primary btn-sm py-0 fs-8">+ Add Donor</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 fs-8">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Donor Code</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Blood</th>
+                                    <th>Clearances</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in donors %}
+                                    <tr>
+                                        <td class="font-monospace fw-bold">{{ d.donor_code }}</td>
+                                        <td>{{ d.donor_name }} ({{ d.age }}y, {{ d.gender|first }})</td>
+                                        <td><span class="badge bg-light text-dark border">{{ d.get_donor_type_display|truncatechars:18 }}</span></td>
+                                        <td><span class="badge bg-danger-subtle text-danger">{{ d.blood_group }}</span></td>
+                                        <td>
+                                            {% if d.family_consent_verified and d.legal_clearance %}
+                                                <span class="badge bg-success-subtle text-success"><i class="bi bi-check-all"></i> Verified</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">No donor records enrolled yet.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Allocated / Transplant Tracking -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h6 class="fw-bold mb-0 text-success"><i class="bi bi-truck me-2"></i>Organ Allocations &amp; Transfer Tracking</h6>
+                    <span class="badge bg-success">{{ allocated_organs.count }} Active</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 fs-8">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Organ ID</th>
+                                    <th>Type</th>
+                                    <th>Matched Recipient</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for o in allocated_organs %}
+                                    <tr>
+                                        <td class="font-monospace fw-bold">{{ o.organ_id }}</td>
+                                        <td>{{ o.get_organ_type_display }} ({{ o.blood_group }})</td>
+                                        <td>
+                                            {% if o.allocated_request %}
+                                                <strong>{{ o.allocated_request.patient.get_full_name|default:o.allocated_request.patient.username }}</strong>
+                                                <small class="d-block text-muted">{{ o.allocated_request.hospital.name }}</small>
+                                            {% else %}
+                                                <span class="text-muted">Direct Allocation</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ o.get_status_display }}</span>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-3">No allocations currently in progress.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

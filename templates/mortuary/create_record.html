@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Log Deceased Intake | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white p-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-3 rounded-circle bg-warning-subtle text-dark">
+                            <i class="bi bi-door-closed fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">Mortuary Deceased Intake Entry</h4>
+                            <p class="text-muted mb-0 fs-8">Record details of deceased arrivals, cold storage location, and screen for potential cadaveric organ donor candidacy.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <h6 class="fw-bold text-navy fs-8 text-uppercase mb-3"><i class="bi bi-person me-1"></i>Deceased Intake Profile</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Deceased Full Name *</label>
+                                {{ form.deceased_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Hospital MRN / Identification ID</label>
+                                {{ form.deceased_id_number }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold fs-8">Age (Years) *</label>
+                                {{ form.age }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold fs-8">Gender *</label>
+                                {{ form.gender }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold fs-8">Blood Group *</label>
+                                {{ form.blood_group }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Time of Death *</label>
+                                {{ form.time_of_death }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Cold Unit / Storage Bay Location *</label>
+                                {{ form.mortuary_room_location }}
+                                <small class="text-muted fs-8">E.g., Storage Bay 3, Cold Vault 4, Shelf 2B</small>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold fs-8">Primary Hospital Facility *</label>
+                                {{ form.hospital }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold fs-8">Cause of Death *</label>
+                                {{ form.cause_of_death }}
+                            </div>
+                        </div>
+
+                        <!-- Organ Donation Screening Section -->
+                        <div class="p-3 bg-warning-subtle border border-warning rounded-3 mb-4">
+                            <h6 class="fw-bold text-dark fs-8 text-uppercase mb-2"><i class="bi bi-heart-pulse-fill text-danger me-1"></i>Organ Donation Screening Trigger</h6>
+                            <div class="form-check mb-2">
+                                {{ form.is_potential_donor }}
+                                <label class="form-check-label fs-8 fw-bold" for="{{ form.is_potential_donor.id_for_label }}">
+                                    Flag as Potential Organ Donor Candidate
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label fw-semibold fs-8">Clinical Justification for Viability</label>
+                                {{ form.donor_flag_reason }}
+                                <small class="text-muted fs-8">E.g., Brain stem death confirmed, no septicemia, vital organs preserved under cold perfusion.</small>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label fw-semibold fs-8">Organs Viable for Harvesting</label>
+                                {{ form.organs_harvestable }}
+                                <small class="text-muted fs-8">E.g., Kidney, Liver, Heart, Cornea</small>
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form.donor_status_verified }}
+                                <label class="form-check-label fs-8 fw-semibold" for="{{ form.donor_status_verified.id_for_label }}">
+                                    Next-of-Kin Consent / Donor Registry Verified
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                {{ form.alert_sent_to_hospital }}
+                                <label class="form-check-label fs-8 fw-bold text-danger" for="{{ form.alert_sent_to_hospital.id_for_label }}">
+                                    Dispatch Immediate Emergency Alert to Hospital Transplant Surgery Team
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'mortuary_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-warning text-dark fw-bold px-4">
+                                <i class="bi bi-save me-1"></i>Save Intake Case
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

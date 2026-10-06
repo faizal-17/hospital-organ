@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Trigger Donor Alert - {{ rec.case_number }} | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-danger border-2">
+                <div class="card-header bg-danger text-white p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-broadcast fs-2"></i>
+                        <div>
+                            <h4 class="fw-bold mb-0">Dispatch Urgent Cadaveric Organ Donor Alert</h4>
+                            <p class="mb-0 fs-8 text-white-50">Notify Hospital Transplant Surgery Team &bull; Case {{ rec.case_number }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="p-3 bg-light rounded-3 border mb-4 fs-8">
+                        <div class="row g-2">
+                            <div class="col-6"><strong>Deceased:</strong> {{ rec.deceased_name }} ({{ rec.age }}y, {{ rec.gender }})</div>
+                            <div class="col-6"><strong>Blood Group:</strong> <span class="badge bg-danger">{{ rec.blood_group }}</span></div>
+                            <div class="col-6"><strong>Time of Death:</strong> {{ rec.time_of_death|date:"d M Y, H:i" }}</div>
+                            <div class="col-6"><strong>Location:</strong> <code>{{ rec.mortuary_room_location }}</code></div>
+                            <div class="col-12 mt-2"><strong>Cause of Death:</strong> {{ rec.cause_of_death }}</div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold fs-8">Harvestable Organs *</label>
+                            <input type="text" name="organs_harvestable" class="form-control" value="{{ rec.organs_harvestable|default:'Kidney, Liver, Heart, Cornea' }}" required>
+                            <small class="text-muted fs-8">Specify organs indicated for cold perfusion preservation and surgical retrieval.</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold fs-8">Clinical Justification &amp; Consent Verification Notes *</label>
+                            <textarea name="donor_flag_reason" class="form-control" rows="3" required>{{ rec.donor_flag_reason|default:'Brain stem death confirmed. Next-of-kin formal consent registered. Vitals maintained and blood circulation checked.' }}</textarea>
+                        </div>
+
+                        <div class="alert alert-warning fs-8 d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
+                            <div>
+                                Submitting this form will automatically instantiate a <b>Donor Record</b> in the hospital central database and send real-time high-priority alerts to the hospital surgical coordination board.
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'mortuary_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger px-4 py-2 shadow-sm fw-bold">
+                                <i class="bi bi-bell-fill me-1"></i>Dispatch Urgent Alert to Hospital
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

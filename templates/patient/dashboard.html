@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Header & Welcome -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Patient Dashboard</h3>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Recipient Portal</span>
+            </div>
+            <p class="text-muted mb-0 fs-8">Welcome back, <b>{{ user.get_full_name|default:user.username }}</b>. Track your organ requests and statutory clearance in real-time.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'submit_organ_request' %}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+                <i class="bi bi-plus-circle"></i> Submit Organ Request
+            </a>
+            <a href="{% url 'patient_profile' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-person-gear"></i> Profile
+            </a>
+        </div>
+    </div>
+
+    {% if active_request %}
+        <!-- Active Request Live Tracking Hero Card -->
+        <div class="card mb-4 border-2 shadow-sm {% if active_request.status == 'ALLOCATED' %}border-success{% elif active_request.priority_level == 'EMERGENCY' %}border-danger{% else %}border-primary{% endif %}">
+            <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold fs-6 text-navy"><i class="bi bi-activity me-1 text-danger"></i>Active Request Tracking:</span>
+                    <span class="badge bg-dark font-monospace fs-7">{{ active_request.request_code }}</span>
+                    <span class="badge bg-secondary-subtle text-dark">{{ active_request.get_organ_display }} ({{ active_request.blood_group }})</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    {% if active_request.priority_level == 'EMERGENCY' %}
+                        <span class="badge bg-danger pulse-critical fs-7 px-3 py-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>EMERGENCY PRIORITY</span>
+                    {% elif active_request.priority_level == 'HIGH' %}
+                        <span class="badge bg-warning text-dark fs-7 px-3 py-2"><i class="bi bi-arrow-up-circle-fill me-1"></i>HIGH PRIORITY</span>
+                    {% else %}
+                        <span class="badge bg-info-subtle text-info border fs-7 px-3 py-2">NORMAL PRIORITY</span>
+                    {% endif %}
+                    
+                    {% if active_request.status == 'GOVT_APPROVED' or active_request.status == 'ALLOCATED' %}
+                        <a href="{% url 'download_certificate_pdf' active_request.id %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>Govt Certificate PDF
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                
+                <!-- 4-STEP STATE MACHINE STEPPER -->
+                <div class="stepper-container">
+                    
+                    <!-- Step 1: Submitted -->
+                    <div class="step-item {% if active_request.status != '' %}completed{% endif %}">
+                        <div class="step-circle"><i class="bi bi-file-earmark-medical"></i></div>
+                        <div class="step-title">1. Submitted</div>
+                        <small class="text-muted d-block fs-8">{{ active_request.created_at|date:"M d, Y" }}</small>
+                    </div>
+
+                    <!-- Step 2: Doctor Verified -->
+                    <div class="step-item {% if active_request.status in 'DOCTOR_VERIFIED,GOVT_APPROVED,ALLOCATED,TRANSPLANTED' %}completed{% elif active_request.status == 'SUBMITTED' %}active{% elif active_request.status == 'DOCTOR_REJECTED' %}text-danger{% endif %}">
+                        <div class="step-circle">
+                            {% if active_request.status == 'DOCTOR_REJECTED' %}
+                                <i class="bi bi-x-circle text-white bg-danger"></i>
+                            {% else %}
+                                <i class="bi bi-clipboard2-pulse"></i>
+                            {% endif %}
+                        </div>
+                        <div class="step-title">2. Doctor Verified</div>
+                        <small class="text-muted d-block fs-8">
+                            {% if active_request.doctor_verified_at %}
+                                {{ active_request.doctor_verified_at|date:"M d, Y" }}
+                            {% else %}
+                                Pending Review
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <!-- Step 3: Govt Approved -->
+                    <div class="step-item {% if active_request.status in 'GOVT_APPROVED,ALLOCATED,TRANSPLANTED' %}completed{% elif active_request.status == 'DOCTOR_VERIFIED' %}active{% elif active_request.status == 'GOVT_REJECTED' %}text-danger{% endif %}">
+                        <div class="step-circle">
+                            {% if active_request.status == 'GOVT_REJECTED' %}
+                                <i class="bi bi-x-circle text-white bg-danger"></i>
+                            {% else %}
+                                <i class="bi bi-bank"></i>
+                            {% endif %}
+                        </div>
+                        <div class="step-title">3. Govt Approved</div>
+                        <small class="text-muted d-block fs-8">
+                            {% if active_request.govt_approved_at %}
+                                {{ active_request.govt_approved_at|date:"M d, Y" }}
+                            {% else %}
+                                In Verification
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <!-- Step 4: Allocated -->
+                    <div class="step-item {% if active_request.status in 'ALLOCATED,TRANSPLANTED' %}completed active{% endif %}">
+                        <div class="step-circle"><i class="bi bi-check2-all"></i></div>
+                        <div class="step-title">4. Organ Allocated</div>
+                        <small class="text-muted d-block fs-8">
+                            {% if active_request.allocated_at %}
+                                {{ active_request.allocated_at|date:"M d, Y" }}
+                            {% else %}
+                                Waiting Match
+                            {% endif %}
+                        </small>
+                    </div>
+
+                </div>
+
+                <!-- Current State Callout Banner -->
+                <div class="p-3 rounded-3 mt-3 
+                    {% if active_request.status == 'ALLOCATED' %}bg-success-subtle border border-success-subtle text-success
+                    {% elif active_request.status == 'GOVT_APPROVED' %}bg-primary-subtle border border-primary-subtle text-primary
+                    {% elif active_request.status == 'DOCTOR_VERIFIED' %}bg-warning-subtle border border-warning-subtle text-dark
+                    {% elif active_request.status == 'SUBMITTED' %}bg-light border text-secondary
+                    {% else %}bg-danger-subtle border border-danger-subtle text-danger{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <strong>Status: {{ active_request.get_status_display }}</strong>
+                            <p class="mb-0 fs-8 mt-1">
+                                {% if active_request.status == 'SUBMITTED' %}
+                                    Your request has been routed to the attending medical board at {{ active_request.hospital.name }}. The doctor will review your clinical history and assign your triage priority.
+                                {% elif active_request.status == 'DOCTOR_VERIFIED' %}
+                                    Medical review complete! Verified by Dr. {{ active_request.doctor_name }}. Dossier transmitted to the Government Authorization Committee.
+                                {% elif active_request.status == 'GOVT_APPROVED' %}
+                                    Statutory Legal Clearance Granted! (Cert Ref: <b>{{ active_request.govt_approval_number }}</b>). You are placed in the active matching pool. The matching engine will allocate immediately when a compatible organ becomes available.
+                                {% elif active_request.status == 'ALLOCATED' %}
+                                    <b class="fs-6">CRITICAL: Organ matched!</b> Organ ID: <b>{{ active_request.allocated_organ.organ_id }}</b>. Admitting Hospital: {{ active_request.hospital.name }}. Please report to the transplant ward immediately.
+                                {% elif active_request.status == 'DOCTOR_REJECTED' %}
+                                    Medical review rejected: {{ active_request.doctor_notes }}
+                                {% elif active_request.status == 'GOVT_REJECTED' %}
+                                    Government statutory authorization denied: {{ active_request.govt_notes }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <span class="badge bg-white text-dark border p-2">
+                                <i class="bi bi-clock-history me-1"></i> Waiting Time: <b>{{ active_request.waiting_days }} days</b>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Key Specs -->
+                <div class="row g-3 mt-3 pt-3 border-top">
+                    <div class="col-md-3">
+                        <small class="text-muted d-block fs-8">Organ Needed</small>
+                        <span class="fw-bold fs-7">{{ active_request.get_organ_display }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted d-block fs-8">Blood Group</small>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-7">{{ active_request.blood_group }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted d-block fs-8">Transplant Hospital</small>
+                        <span class="fw-bold fs-7">{{ active_request.hospital.name }}</span>
+                    </div>
+                    <div class="col-md-3 text-md-end">
+                        <a href="{% url 'request_detail' active_request.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>View Full Dossier &amp; Audit Trail
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    {% else %}
+        <!-- Empty State Prompt -->
+        <div class="card p-5 text-center mb-4 bg-light border-dashed">
+            <div class="mb-3">
+                <i class="bi bi-inbox text-muted display-4"></i>
+            </div>
+            <h4 class="fw-bold">No Active Organ Requests</h4>
+            <p class="text-muted fs-8 mb-4">You have not submitted any organ requests yet. Submit your clinical requirements and reports to begin the medical and statutory clearance process.</p>
+            <div>
+                <a href="{% url 'submit_organ_request' %}" class="btn btn-primary px-4">
+                    <i class="bi bi-plus-circle me-1"></i>Submit New Organ Request
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Two-Column Grid: Request History & Live In-App Notifications -->
+    <div class="row g-4">
+        
+        <!-- Column 1: Request History -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-list-check me-2 text-primary"></i>My Organ Request History</h6>
+                    <span class="badge bg-secondary">{{ requests.count }} Requests</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light fs-8">
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Organ</th>
+                                    <th>Blood</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="fs-8">
+                                {% for r in requests %}
+                                    <tr>
+                                        <td class="font-monospace fw-bold">{{ r.request_code }}</td>
+                                        <td>{{ r.get_organ_display }}</td>
+                                        <td><span class="badge bg-danger-subtle text-danger">{{ r.blood_group }}</span></td>
+                                        <td>
+                                            {% if r.priority_level == 'EMERGENCY' %}
+                                                <span class="badge bg-danger">Emergency</span>
+                                            {% elif r.priority_level == 'HIGH' %}
+                                                <span class="badge bg-warning text-dark">High</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark border">Normal</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if r.status == 'ALLOCATED' %}bg-success
+                                                {% elif r.status == 'GOVT_APPROVED' %}bg-primary
+                                                {% elif r.status == 'DOCTOR_VERIFIED' %}bg-info
+                                                {% elif r.status == 'SUBMITTED' %}bg-secondary
+                                                {% else %}bg-danger{% endif %}">
+                                                {{ r.get_status_display|truncatechars:22 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'request_detail' r.id %}" class="btn btn-outline-secondary btn-sm py-0 fs-8">Details</a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-3">No requests found.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 2: Notification Center -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-bell-fill me-2 text-warning"></i>Live In-App Notification Log</h6>
+                    {% if unread_notifications_count > 0 %}
+                        <a href="{% url 'mark_all_notifications_read' %}" class="fs-8 text-decoration-none">Mark all read</a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-3">
+                    {% if notifications %}
+                        <div class="d-flex flex-column gap-2">
+                            {% for notif in notifications %}
+                                <div class="p-3 rounded border {% if not notif.is_read %}bg-primary-subtle border-primary-subtle{% else %}bg-light{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <span class="fw-bold fs-8 {% if notif.category == 'EMERGENCY' %}text-danger{% elif notif.category == 'SUCCESS' %}text-success{% else %}text-dark{% endif %}">
+                                            <i class="bi {% if notif.category == 'EMERGENCY' %}bi-exclamation-octagon-fill text-danger{% elif notif.category == 'SUCCESS' %}bi-check-circle-fill text-success{% else %}bi-info-circle-fill text-primary{% endif %} me-1"></i>
+                                            {{ notif.title }}
+                                        </span>
+                                        <small class="text-muted fs-8">{{ notif.created_at|timesince }} ago</small>
+                                    </div>
+                                    <p class="mb-0 fs-8 text-secondary">{{ notif.message }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4 fs-8">No notifications currently logged.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

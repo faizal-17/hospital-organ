@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Government Legal Clearance Review: {{ req.request_code }} | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            
+            <div class="mb-3">
+                <a href="{% url 'govt_dashboard' %}" class="text-decoration-none text-muted fs-8">
+                    <i class="bi bi-arrow-left"></i> Back to Government Authorization Panel
+                </a>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-8 mb-1">Directorate General of Health Services</span>
+                        <h4 class="fw-bold mb-0">Statutory Legal Scrutiny: <span class="font-monospace text-primary">{{ req.request_code }}</span></h4>
+                    </div>
+                    <span class="badge bg-dark fs-7 px-3 py-2">Section 9 Authorization</span>
+                </div>
+
+                <div class="card-body p-4">
+                    
+                    <!-- Clinical Dossier Verified by Doctor -->
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                            <span class="fw-bold text-success fs-8"><i class="bi bi-check-circle-fill me-1"></i>Medical Board Clearance Verified</span>
+                            <span class="badge bg-light text-dark border">
+                                Reviewer: Dr. {{ req.doctor_verified_by.get_full_name|default:req.doctor_verified_by.username }}
+                            </span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Recipient</small>
+                                <strong>{{ req.patient.get_full_name|default:req.patient.username }}</strong>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Required Organ</small>
+                                <strong class="text-primary">{{ req.get_organ_display }}</strong>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Strict Blood Group</small>
+                                <span class="badge bg-danger">{{ req.blood_group }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Assigned Triage</small>
+                                <strong class="{% if req.priority_level == 'EMERGENCY' %}text-danger{% elif req.priority_level == 'HIGH' %}text-warning{% else %}text-info{% endif %}">
+                                    {{ req.get_priority_level_display }}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2 border-top fs-8 text-secondary">
+                            <strong>Physician Medical Notes:</strong> <i>"{{ req.doctor_notes }}"</i>
+                        </div>
+                    </div>
+
+                    <!-- Government Legal Checklist & Decision Form -->
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="card border-primary-subtle bg-light mb-4">
+                            <div class="card-header bg-white py-2">
+                                <h6 class="fw-bold text-primary mb-0 fs-8"><i class="bi bi-shield-lock me-1"></i>Statutory Compliance Checkpoints</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="form-check mb-3">
+                                    {{ form.compliance_identity_checked }}
+                                    <label class="form-check-label fs-8 fw-semibold" for="{{ form.compliance_identity_checked.id_for_label }}">
+                                        Verified recipient statutory identity, residency credentials &amp; national registry eligibility.
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.compliance_no_commercial_deal }}
+                                    <label class="form-check-label fs-8 fw-semibold" for="{{ form.compliance_no_commercial_deal.id_for_label }}">
+                                        Certified strict adherence to Transplantation of Human Organs Act (Zero commercial transactions / Non-monetary clearance).
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold fs-8">Government Committee Decision *</label>
+                                {{ form.decision }}
+                                <small class="text-muted fs-8">Granting approval issues a cryptographic Government Certificate and places the candidate into the algorithmic matching queue.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold fs-8">Government Official Findings &amp; Statutory Notes *</label>
+                            {{ form.govt_notes }}
+                            <small class="text-muted fs-8">Record committee members present, registry gazette reference, and statutory clearance remarks.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'govt_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger px-4 py-2 shadow-sm">
+                                <i class="bi bi-stamp me-1"></i>Issue Formal Government Decision
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Government Authorization Panel | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Government Authorization &amp; Legal Compliance</h3>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">State Statutory Authority</span>
+            </div>
+            <p class="text-muted mb-0 fs-8">Competent Authority under Section 9 of the Transplantation of Human Organs &amp; Tissues Act. Authorize verified applications and issue certificates.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge bg-danger fs-6 px-3 py-2">
+                <i class="bi bi-shield-exclamation me-1"></i>{{ awaiting_approval.count }} Awaiting Legal Clearance
+            </span>
+        </div>
+    </div>
+
+    <!-- 1. Awaiting Statutory Approval Queue -->
+    <div class="card mb-4 shadow-sm border-top border-4 border-danger">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-bank text-danger me-2"></i>Doctor-Verified Requests Awaiting Government Authorization</h5>
+                <small class="text-muted fs-8">These applications have passed medical triage and require formal statutory clearance.</small>
+            </div>
+            <span class="badge bg-danger">{{ awaiting_approval.count }} Pending</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 fs-8">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Request ID</th>
+                            <th>Patient / Recipient</th>
+                            <th>Organ Required</th>
+                            <th>Blood Group</th>
+                            <th>Verified Priority</th>
+                            <th>Medical Reviewer</th>
+                            <th>Admitting Hospital</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in awaiting_approval %}
+                            <tr>
+                                <td class="font-monospace fw-bold text-primary">{{ r.request_code }}</td>
+                                <td>
+                                    <strong>{{ r.patient_name }}</strong>
+                                    <small class="d-block text-muted">ID: {{ r.patient.profile.national_id|default:"On File" }}</small>
+                                </td>
+                                <td><span class="fw-bold">{{ r.get_organ_display }}</span></td>
+                                <td><span class="badge bg-danger-subtle text-danger">{{ r.blood_group }}</span></td>
+                                <td>
+                                    {% if r.priority_level == 'EMERGENCY' %}
+                                        <span class="badge bg-danger pulse-critical"><i class="bi bi-exclamation-octagon-fill me-1"></i>EMERGENCY</span>
+                                    {% elif r.priority_level == 'HIGH' %}
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-arrow-up-circle-fill me-1"></i>HIGH</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark border">NORMAL</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    Dr. {{ r.doctor_name }}
+                                    <small class="d-block text-muted">{{ r.doctor_verified_at|date:"d M Y, H:i" }}</small>
+                                </td>
+                                <td>{{ r.hospital.name }}</td>
+                                <td>
+                                    <a href="{% url 'govt_review' r.id %}" class="btn btn-danger btn-sm px-3 shadow-sm">
+                                        <i class="bi bi-award-fill me-1"></i>Grant / Review Authorization
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="bi bi-shield-check text-success fs-1 d-block mb-2"></i>
+                                    No applications pending government review.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Active Approved Waiting Pool -->
+    <div class="card mb-4 shadow-sm border-top border-4 border-primary">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <div>
+                <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-patch-check-fill me-2"></i>Government Approved Waiting Pool (Eligible for Algorithm Matching)</h6>
+                <small class="text-muted fs-8">Active authorized patients in central registry awaiting compatible organ availability.</small>
+            </div>
+            <span class="badge bg-primary">{{ approved_pool.count }} Approved In Pool</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 fs-8">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cert Ref No.</th>
+                            <th>Request ID</th>
+                            <th>Patient</th>
+                            <th>Organ</th>
+                            <th>Blood</th>
+                            <th>Priority Tier</th>
+                            <th>Wait Days</th>
+                            <th>Official Clearance Certificate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in approved_pool %}
+                            <tr>
+                                <td class="font-monospace fw-bold text-danger">{{ r.govt_approval_number }}</td>
+                                <td class="font-monospace">{{ r.request_code }}</td>
+                                <td>{{ r.patient_name }}</td>
+                                <td>{{ r.get_organ_display }}</td>
+                                <td><span class="badge bg-danger-subtle text-danger">{{ r.blood_group }}</span></td>
+                                <td>
+                                    {% if r.priority_level == 'EMERGENCY' %}
+                                        <span class="badge bg-danger">Emergency</span>
+                                    {% elif r.priority_level == 'HIGH' %}
+                                        <span class="badge bg-warning text-dark">High</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark border">Normal</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="fw-bold">{{ r.waiting_days }}</span> days</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'download_certificate_pdf' r.id %}" class="btn btn-outline-danger">
+                                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
+                                        </a>
+                                        <a href="{% url 'view_certificate_html' r.id %}" target="_blank" class="btn btn-outline-secondary">
+                                            <i class="bi bi-printer me-1"></i>View
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">No approved patients currently in the pool.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Denied Archive -->
+    {% if denied_requests %}
+        <div class="card shadow-sm border-secondary">
+            <div class="card-header bg-white py-2">
+                <h6 class="fw-bold mb-0 text-muted fs-8"><i class="bi bi-x-octagon me-2"></i>Statutory Clearance Denied Archive</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 fs-8">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Request ID</th>
+                                <th>Patient</th>
+                                <th>Organ</th>
+                                <th>Denied Reason</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in denied_requests %}
+                                <tr>
+                                    <td class="font-monospace">{{ r.request_code }}</td>
+                                    <td>{{ r.patient_name }}</td>
+                                    <td>{{ r.get_organ_display }}</td>
+                                    <td class="text-danger">{{ r.govt_notes }}</td>
+                                    <td>{{ r.updated_at|date:"d M Y" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

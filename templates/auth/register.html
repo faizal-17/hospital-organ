@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Registration | OrganSync Portal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white p-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-3 rounded-circle bg-primary-subtle text-primary">
+                            <i class="bi bi-person-plus-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">Patient Portal Registration</h4>
+                            <p class="text-muted mb-0 fs-8">Register to submit organ requests, upload medical reports, and track statutory authorization.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Registration could not be completed:</strong>
+                            <ul class="mb-0 mt-1">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'register' %}">
+                        {% csrf_token %}
+                        
+                        <h6 class="text-primary fw-bold text-uppercase fs-8 mb-3"><i class="bi bi-person-badge me-1"></i>Account Credentials</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Username *</label>
+                                {{ form.username }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Email Address *</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Password *</label>
+                                {{ form.password }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Confirm Password *</label>
+                                {{ form.password_confirm }}
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary fw-bold text-uppercase fs-8 mb-3"><i class="bi bi-card-heading me-1"></i>Personal &amp; Clinical Information</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">First Name *</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Last Name *</label>
+                                {{ form.last_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fs-8 fw-semibold">Blood Group *</label>
+                                {{ form.blood_group }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fs-8 fw-semibold">Contact Phone *</label>
+                                {{ form.phone }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fs-8 fw-semibold">National ID / Aadhar *</label>
+                                {{ form.national_id }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Date of Birth</label>
+                                {{ form.date_of_birth }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Residential Address</label>
+                                {{ form.address }}
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary fw-bold text-uppercase fs-8 mb-3"><i class="bi bi-telephone-plus me-1"></i>Emergency Contact Details</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Emergency Contact Name</label>
+                                {{ form.emergency_contact_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fs-8 fw-semibold">Emergency Contact Phone</label>
+                                {{ form.emergency_contact_phone }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                            <a href="{% url 'login' %}" class="text-secondary text-decoration-none fs-8">Already registered? Sign In</a>
+                            <button type="submit" class="btn btn-primary px-4 py-2">Complete Patient Registration</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

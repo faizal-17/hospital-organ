@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Organ Request | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white p-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-3 rounded-circle bg-primary-subtle text-primary">
+                            <i class="bi bi-file-earmark-medical-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">Submit New Organ Request</h4>
+                            <p class="text-muted mb-0 fs-8">Provide clinical details, select your admitting transplant hospital, and upload medical records for physician review.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="alert alert-info d-flex align-items-center mb-4 fs-8" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                        <div>
+                            <strong>Transparent Statutory Process:</strong> Your application will be sent to the selected hospital's medical team for necessity verification and priority triage before proceeding to the State Government Authorization Committee.
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Organ Required *</label>
+                                {{ form.organ }}
+                                <small class="text-muted fs-8">Select the vital organ indicated by your medical specialist.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Blood Group *</label>
+                                {{ form.blood_group }}
+                                <small class="text-muted fs-8">Strict match with donor is required during matching.</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold fs-8">Admitting Transplant Hospital *</label>
+                                {{ form.hospital }}
+                                <small class="text-muted fs-8">The authorized medical center supervising your treatment and future transplant surgery.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold fs-8">Detailed Medical History &amp; Clinical Diagnosis *</label>
+                            {{ form.medical_history }}
+                            <small class="text-muted fs-8">Include date of diagnosis, end-stage organ condition, dialysis history (if renal), cardiac ejection fraction (if heart), and comorbidities.</small>
+                        </div>
+
+                        <div class="mb-4 p-3 bg-light rounded-3 border">
+                            <label class="form-label fw-semibold fs-8"><i class="bi bi-paperclip me-1"></i>Attach Supporting Medical Reports &amp; HLA/Serology Dossier</label>
+                            {{ form.medical_report }}
+                            <small class="text-muted d-block mt-1 fs-8">Upload diagnostic PDF, lab reports, biopsy, or physician referral letter (Mock placeholder or real file accepted).</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'patient_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4 py-2">
+                                <i class="bi bi-send-fill me-1"></i>Submit Request for Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Mortuary Operations & Organ Donation Triggers | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Mortuary Unit Operations &amp; Cadaveric Donor Alerts</h3>
+                <span class="badge bg-warning-subtle text-dark border border-warning px-2 py-1">Mortuary Module</span>
+            </div>
+            <p class="text-muted mb-0 fs-8">Maintain deceased patient intake, track cold storage bay locations, flag viable organ donors, and trigger rapid coordination alerts to transplant surgical teams.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'create_mortuary_record' %}" class="btn btn-warning text-dark fw-semibold shadow-sm">
+                <i class="bi bi-journal-plus me-1"></i> Log Deceased Intake
+            </a>
+        </div>
+    </div>
+
+    <!-- Potential Organ Donor Triggers Alert Card -->
+    <div class="card mb-4 shadow-sm border-top border-4 border-warning">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Flagged Potential Organ Donors (Cadaveric Preservation)
+                </h5>
+                <small class="text-muted fs-8">Cases fulfilling clinical viability for organ harvest requiring rapid family consent and surgical team dispatch.</small>
+            </div>
+            <span class="badge bg-warning text-dark">{{ potential_donors.count }} Potential Donors</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 fs-8">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Case #</th>
+                            <th>Deceased Name</th>
+                            <th>Blood</th>
+                            <th>Time of Death</th>
+                            <th>Mortuary Storage Bay</th>
+                            <th>Harvestable Organs</th>
+                            <th>Family Consent / Status</th>
+                            <th>Hospital Alert</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in potential_donors %}
+                            <tr class="{% if p.alert_sent_to_hospital %}table-light{% else %}table-warning bg-opacity-25{% endif %}">
+                                <td class="font-monospace fw-bold">{{ p.case_number }}</td>
+                                <td>
+                                    <strong>{{ p.deceased_name }}</strong> (Age: {{ p.age }}, {{ p.gender|first }})
+                                    <small class="d-block text-muted">{{ p.cause_of_death|truncatechars:35 }}</small>
+                                </td>
+                                <td><span class="badge bg-danger-subtle text-danger fs-7">{{ p.blood_group }}</span></td>
+                                <td>{{ p.time_of_death|date:"d M Y, H:i" }}</td>
+                                <td><span class="badge bg-dark">{{ p.mortuary_room_location }}</span></td>
+                                <td><span class="fw-bold text-primary">{{ p.organs_harvestable|default:"Kidney, Liver, Cornea" }}</span></td>
+                                <td>
+                                    {% if p.donor_status_verified %}
+                                        <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle"></i> Consent Verified</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Awaiting Verification</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if p.alert_sent_to_hospital %}
+                                        <span class="badge bg-success"><i class="bi bi-bell-fill me-1"></i>Alert Dispatched</span>
+                                        <small class="d-block text-muted">{{ p.alert_sent_at|timesince }} ago</small>
+                                    {% else %}
+                                        <span class="badge bg-danger pulse-critical"><i class="bi bi-exclamation-circle me-1"></i>Needs Alert</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not p.alert_sent_to_hospital %}
+                                        <a href="{% url 'trigger_donation' p.id %}" class="btn btn-danger btn-sm shadow-sm py-1">
+                                            <i class="bi bi-bell-fill me-1"></i>Trigger Hospital Alert
+                                        </a>
+                                    {% else %}
+                                        <span class="text-success fw-semibold"><i class="bi bi-check-all"></i> Coordinated</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">No active donors currently flagged in mortuary unit.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Mortuary Intake Ledger -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h6 class="fw-bold mb-0 text-secondary"><i class="bi bi-journal-text me-2"></i>Complete Mortuary Intake Records Ledger</h6>
+            <span class="badge bg-secondary">{{ records.count }} Cases</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 fs-8">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Case #</th>
+                            <th>Deceased Name</th>
+                            <th>Age/Gender</th>
+                            <th>Blood Group</th>
+                            <th>Time of Demise</th>
+                            <th>Primary Cause of Death</th>
+                            <th>Storage Location</th>
+                            <th>Potential Donor?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                            <tr>
+                                <td class="font-monospace fw-bold">{{ r.case_number }}</td>
+                                <td>{{ r.deceased_name }}</td>
+                                <td>{{ r.age }}y / {{ r.gender|title }}</td>
+                                <td><span class="badge bg-danger-subtle text-danger">{{ r.blood_group }}</span></td>
+                                <td>{{ r.time_of_death|date:"d M Y, H:i" }}</td>
+                                <td>{{ r.cause_of_death|truncatechars:45 }}</td>
+                                <td><code>{{ r.mortuary_room_location }}</code></td>
+                                <td>
+                                    {% if r.is_potential_donor %}
+                                        <span class="badge bg-success-subtle text-success">FLAGGED DONOR</span>
+                                    {% else %}
+                                        <span class="text-muted">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-3">No mortuary intake cases logged yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

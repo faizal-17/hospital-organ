@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Medical Review for {{ req.request_code }} | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            
+            <!-- Breadcrumb -->
+            <div class="mb-3">
+                <a href="{% url 'doctor_dashboard' %}" class="text-decoration-none text-muted fs-8">
+                    <i class="bi bi-arrow-left"></i> Back to Review Queue
+                </a>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle fs-8 mb-1">Medical Board Review</span>
+                        <h4 class="fw-bold mb-0">Evaluate Organ Request: <span class="font-monospace text-primary">{{ req.request_code }}</span></h4>
+                    </div>
+                    <span class="badge bg-secondary fs-7 px-3 py-2">Submitted {{ req.created_at|date:"d M Y, H:i" }}</span>
+                </div>
+
+                <div class="card-body p-4">
+                    
+                    <!-- Patient Dossier Summary -->
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Patient Name</small>
+                                <strong class="fs-7">{{ req.patient.get_full_name|default:req.patient.username }}</strong>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Blood Group</small>
+                                <span class="badge bg-danger fs-7">{{ req.blood_group }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Organ Required</small>
+                                <strong class="fs-7 text-primary">{{ req.get_organ_display }}</strong>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block fs-8">Admitting Hospital</small>
+                                <strong class="fs-7">{{ req.hospital.name }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Diagnosis Section -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold fs-8 text-secondary text-uppercase mb-2"><i class="bi bi-file-earmark-medical me-1"></i>Clinical History &amp; Comorbidities</h6>
+                        <div class="p-3 rounded border bg-white fs-8 text-dark lh-base">
+                            {{ req.medical_history|linebreaks }}
+                        </div>
+                    </div>
+
+                    <!-- Medical Report Attachment -->
+                    {% if req.medical_report %}
+                        <div class="p-3 bg-primary-subtle border border-primary-subtle rounded-3 mb-4 d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark-pdf-fill text-danger fs-4 me-2"></i>
+                                <span class="fw-bold fs-8">Attached Diagnostic File / Lab Report</span>
+                                <small class="d-block text-muted">{{ req.medical_report.name }}</small>
+                            </div>
+                            <a href="{{ req.medical_report.url }}" target="_blank" class="btn btn-primary btn-sm px-3">
+                                <i class="bi bi-download me-1"></i>Open / Download File
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-light border fs-8 mb-4">
+                            <i class="bi bi-info-circle me-1"></i>No digital file attached. Attending physician has access to internal hospital EMR records.
+                        </div>
+                    {% endif %}
+
+                    <hr class="my-4">
+
+                    <!-- Medical Review Form -->
+                    <h5 class="fw-bold text-navy mb-3"><i class="bi bi-shield-check text-success me-2"></i>Physician Evaluation &amp; Triage Assignment</h5>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Medical Verification Decision *</label>
+                                {{ form.decision }}
+                                <small class="text-muted fs-8">Approve to route to Government Authorization Committee, or Reject on clinical grounds.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold fs-8">Assign Priority Triage Tier *</label>
+                                {{ form.priority_level }}
+                                <small class="text-muted fs-8">Emergency: 1000 pts (critical ICU), High: 500 pts, Normal: 100 pts.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold fs-8">Clinical Justification &amp; Medical Officer Notes *</label>
+                            {{ form.doctor_notes }}
+                            <small class="text-muted fs-8">Mandatory clinical rationale: specify laboratory indicators (e.g. MELD score, eGFR, NYHA functional class).</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'doctor_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success px-4 py-2 shadow-sm">
+                                <i class="bi bi-check2-circle me-1"></i>Submit Medical Review &amp; Triage
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

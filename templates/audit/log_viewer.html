@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Statutory Audit Log & Legal Ledger | OrganSync{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Statutory Legal Audit Log &amp; State Ledger</h3>
+                <span class="badge bg-secondary px-2 py-1"><i class="bi bi-shield-shaded me-1"></i>Immutable Audit Trail</span>
+            </div>
+            <p class="text-muted mb-0 fs-8">Complete statutory ledger tracking all requests, physician triage assignments, government clearances, and organ allocation bindings.</p>
+        </div>
+        <div>
+            <span class="badge bg-light text-dark border p-2 fs-7 font-monospace">
+                Total Audit Entries: <b>{{ logs.count }}</b>
+            </span>
+        </div>
+    </div>
+
+    <!-- Audit Log Card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0 text-navy"><i class="bi bi-clock-history me-2 text-primary"></i>Chronological State Transitions</h6>
+            <span class="badge bg-primary">Real-time Logging</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 fs-8">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 170px;">Timestamp</th>
+                            <th>Action Type</th>
+                            <th>Actor / Authority</th>
+                            <th>Role</th>
+                            <th>Entity Key</th>
+                            <th>State Transition</th>
+                            <th>Audit Notes / Cryptographic Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                            <tr>
+                                <td class="text-muted font-monospace">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if 'ALLOCATED' in log.action %}bg-success
+                                        {% elif 'GOVT' in log.action %}bg-danger
+                                        {% elif 'DOCTOR' in log.action %}bg-primary
+                                        {% elif 'MORTUARY' in log.action %}bg-warning text-dark
+                                        {% else %}bg-secondary{% endif %} font-monospace">
+                                        {{ log.action }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ log.actor_name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-secondary border">{{ log.actor_role }}</span>
+                                </td>
+                                <td>
+                                    {% if log.request %}
+                                        <a href="{% url 'request_detail' log.request.id %}" class="font-monospace text-decoration-none fw-bold">
+                                            {{ log.request.request_code }}
+                                        </a>
+                                    {% elif log.organ %}
+                                        <span class="font-monospace text-primary fw-bold">{{ log.organ.organ_id }}</span>
+                                    {% elif log.mortuary_record %}
+                                        <span class="font-monospace text-dark">{{ log.mortuary_record.case_number }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if log.to_state %}
+                                        <code>{{ log.from_state|default:"INIT" }}</code> &rarr; <code>{{ log.to_state }}</code>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-secondary">{{ log.comments }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">No audit log entries recorded yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
